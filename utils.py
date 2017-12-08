@@ -13,6 +13,7 @@ import glob
 import matplotlib.pyplot as plt
 from pdb import set_trace
 
+
 def image_center_crop(img):
     h, w = img.shape[0], img.shape[1]
     pad_left = 0
@@ -90,7 +91,7 @@ def apply_model_frzn(dataset_address, model, preprocess_for_model, extensions=("
 
 
 
-def apply_model(data_path, model, preprocess_for_model, extensions=(".jpg",), input_shape=(224, 224), batch_size=32):
+def apply_model(zip_fn, model, preprocess_for_model, extensions=(".jpg",), input_shape=(224, 224), batch_size=32):
     # queue for cropped images
     q = queue.Queue(maxsize=batch_size * 10)
 
@@ -100,7 +101,7 @@ def apply_model(data_path, model, preprocess_for_model, extensions=(".jpg",), in
     # time for read thread to die
     kill_read_thread = threading.Event()
 
-    def reading_thread(data_path):
+    def reading_thread(zip_fn):
         zf = zipfile.ZipFile(zip_fn)
         for fn in tqdm.tqdm_notebook(zf.namelist()):
             if kill_read_thread.is_set():
