@@ -45,51 +45,6 @@ def crop_and_preprocess(img, input_shape, preprocess_for_model):
     return img
 
 
-def apply_model_frzn(dataset_address, model, preprocess_for_model, extensions=(".jpg",), input_shape=(224, 224), batch_size=32):
-
-    counter = 0
-    num_exm = 10000
-    img_embedding = np.ndarray((num_exm, 3*3*1024))
-    img_ids = np.zeros(num_exm)
-    img_filenames = []
-    print("\n\n creating the feature vectors ...")
-    for filename in glob.glob(dataset_address): 
-        if 'val' in dataset_address:
-            name = 'val'
-        if 'train' in dataset_address:
-            name = 'train'
-        set_trace()
-        img_id = int(filename.strip('.jpg').replace('{}/COCO_{}2014_'.format(dataset_address,name),''))
-        set_trace()
-        if counter == num_exm:
-            break
-        img = cv2.imread(filename)
-        img = cv2.resize(img, (img_width, img_height))
-        arr = np.array(img).reshape((img_width,img_height,3))
-        arr = np.expand_dims(arr, axis=0)
-        # normalizing the images
-        arr = arr / 255
-        
-        # plt.imshow(img)
-    #     intermediate_output = intermediate_layer_model.predict(arr)
-        intermediate_output = model3.predict(arr)
-        img_embedding[counter,:] = intermediate_output[0].flatten()
-        img_ids[counter] = img_id
-        img_filenames.append(filename)
-        counter += 1
-        
-    print("\n\n saving the feature vectors ...")
-    main_dir = './datasets/coco/extracted_2014/'
-    np.save(main_dir+"img_embeddings_{}_2014".format(dataset), img_embedding)
-    np.save(main_dir+"img_ids_{}_2014".format(dataset), img_ids)
-    myFile = open(main_dir+'img_filenames_{}_2014.txt'.format(dataset), 'w')
-    for item in img_filenames:
-        myFile.write("%s\n" % item)
-
-
-
-
-
 
 def apply_model(zip_fn, model, preprocess_for_model, extensions=(".jpg",), input_shape=(224, 224), batch_size=32):
     # queue for cropped images
