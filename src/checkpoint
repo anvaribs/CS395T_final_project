@@ -1,0 +1,6 @@
+model_checkpoint_path: "/home/farzan15/CS395T_final_project/src/weights"
+all_model_checkpoint_paths: "/home/farzan15/CS395T_final_project/data/coco/weights/weights_6"
+all_model_checkpoint_paths: "/home/farzan15/CS395T_final_project/data/coco/weights/weights_7"
+all_model_checkpoint_paths: "/home/farzan15/CS395T_final_project/data/coco/weights/weights_8"
+all_model_checkpoint_paths: "/home/farzan15/CS395T_final_project/data/coco/weights/weights_9"
+all_model_checkpoint_paths: "/home/farzan15/CS395T_final_project/src/weights"
