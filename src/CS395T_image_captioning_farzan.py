@@ -14,10 +14,11 @@
 
 
 import sys
+sys.path.append("../utils")
 sys.path.append("..")
 
 
-# In[2]:
+# In[67]:
 
 
 import tensorflow as tf
@@ -39,6 +40,7 @@ import random
 from random import choice
 import os
 from pdb import set_trace
+from keras.preprocessing import sequence
 
 from IPython.display import Image
 
@@ -60,14 +62,14 @@ from IPython.display import Image
 # 
 # We will use pre-trained yoloV2, yolo9000, and InceptionV3 model for CNN encoder (https://research.googleblog.com/2016/03/train-your-own-image-classifier-with.html) and extract its last hidden layer as an embedding:
 
-# In[6]:
+# In[3]:
 
 
 # IMG_SIZE = 299
 IMG_SIZE = 608
 
 
-# In[7]:
+# In[4]:
 
 
 # # we take the last hidden layer of IncetionV3 as an image embedding
@@ -81,7 +83,7 @@ IMG_SIZE = 608
 #     return model, preprocess_for_model
 
 
-# In[8]:
+# In[5]:
 
 
 def yolo_preprocess_input(x):
@@ -89,11 +91,11 @@ def yolo_preprocess_input(x):
     return x
 
 
-# In[9]:
+# In[6]:
 
 
 # yolo_model_location = '/home/anvaribs/YAD2K/model_data/yolo.h5'
-yolo_model_location = './models/yolo.h5'
+yolo_model_location = '../models/yolo.h5'
 
 # we take the last hidden layer of yolo as an image embedding
 def get_yolo_encoder():
@@ -111,16 +113,16 @@ def get_yolo_encoder():
     return yolo_model, yolo_preprocess_for_model
 
 
-# In[10]:
+# In[7]:
 
 
 yolo_encoder, yolo_preprocess_for_model = get_yolo_encoder()
 
 
-# In[ ]:
+# In[8]:
 
 
-yolo_encoder.summary()
+# yolo_encoder.summary()
 
 
 # Features extraction takes too much time on CPU:
@@ -131,19 +133,19 @@ yolo_encoder.summary()
 # 
 # So we've can do it beforehand and save it on the disk.
 
-# In[ ]:
+# In[9]:
 
 
 # train2014_zip = '/home/anvaribs/coco/images/train2014.zip'
 # val2014_zip = '/home/anvaribs/coco/images/val2014.zip'
-train2014_zip = 'data/coco/train2014.zip'
-val2014_zip = 'data/coco/val2014.zip'
+train2014_zip = '../data/coco/train2014.zip'
+val2014_zip = '../data/coco/val2014.zip'
 
 
-# In[11]:
+# In[10]:
 
 
-# load pre-trained model
+# # load pre-trained model
 # K.clear_session()
 # encoder, preprocess_for_model = get_yolo_encoder()
 
@@ -151,45 +153,48 @@ val2014_zip = 'data/coco/val2014.zip'
 
 # train_img_embeds, train_img_fns = utils.apply_model(
 #     train2014_zip, encoder, preprocess_for_model, input_shape=(IMG_SIZE, IMG_SIZE))
-# utils.save_pickle(train_img_embeds, "train_img_embeds_yoloV2_global.pickle")
-# utils.save_pickle(train_img_fns, "train_img_fns_yoloV2_global.pickle")
+# utils.save_pickle(train_img_embeds, "../data/coco/extracted/train_img_embeds_yoloV2_global.pickle")
+# utils.save_pickle(train_img_fns, "../data/coco/extracted/train_img_fns_yoloV2_global.pickle")
 
 # # extract validation features
 # val_img_embeds, val_img_fns = utils.apply_model(
 #     val2014_zip, encoder, preprocess_for_model, input_shape=(IMG_SIZE, IMG_SIZE))
-# utils.save_pickle(val_img_embeds, "val_img_embeds_yoloV2_global.pickle")
-# utils.save_pickle(val_img_fns, "val_img_fns_yoloV2_global.pickle")
+# utils.save_pickle(val_img_embeds, "../data/coco/extracted/val_img_embeds_yoloV2_global.pickle")
+# utils.save_pickle(val_img_fns, "../data/coco/extracted/val_img_fns_yoloV2_global.pickle")
+
 # set_trace()
 
-# In[ ]:
+
+# In[11]:
 
 
-# sample images for faster training
-def sample_zip(fn_in, fn_out, rate=0.01, seed=42):
-    np.random.seed(seed)
-    with zipfile.ZipFile(fn_in) as fin, zipfile.ZipFile(fn_out, "w") as fout:
-        sampled = filter(lambda _: np.random.rand() < rate, fin.filelist)
-        for zInfo in sampled:
-            fout.writestr(zInfo, fin.read(zInfo))
+# # sample images for faster training
+# def sample_zip(fn_in, fn_out, rate=0.01, seed=42):
+#     np.random.seed(seed)
+#     with zipfile.ZipFile(fn_in) as fin, zipfile.ZipFile(fn_out, "w") as fout:
+#         sampled = filter(lambda _: np.random.rand() < rate, fin.filelist)
+#         for zInfo in sampled:
+#             fout.writestr(zInfo, fin.read(zInfo))
 
-sample_zip(train2014_zip, "train2014_sample_yoloV2.zip", rate = 0.01, seed = 42)
-sample_zip(val2014_zip, "val2014_sample_yoloV2.zip", rate = 0.01, seed = 42)
+# sample_zip(train2014_zip, "../data/coco/train2014_sample_yoloV2.zip", rate = 0.01, seed = 42)
+# sample_zip(val2014_zip, "../data/coco/val2014_sample_yoloV2.zip", rate = 0.01, seed = 42)
 
 
-# In[ ]:
+# In[12]:
+
 
 
 # load prepared embeddings
-train_img_embeds = utils.read_pickle("train_img_embeds_yoloV2_global.pickle")
-train_img_fns = utils.read_pickle("train_img_fns_yoloV2_global.pickle")
-val_img_embeds = utils.read_pickle("val_img_embeds_yoloV2_global.pickle")
-val_img_fns = utils.read_pickle("val_img_fns_yoloV2_global.pickle")
+train_img_embeds = utils.read_pickle("../data/coco/extracted/train_img_embeds_yoloV2_global.pickle")
+train_img_fns = utils.read_pickle("../data/coco/extracted/train_img_fns_yoloV2_global.pickle")
+val_img_embeds = utils.read_pickle("../data/coco/extracted/val_img_embeds_yoloV2_global.pickle")
+val_img_fns = utils.read_pickle("../data/coco/extracted/val_img_fns_yoloV2_global.pickle")
 # check shapes
 print(train_img_embeds.shape, len(train_img_fns))
 print(val_img_embeds.shape, len(val_img_fns))
 
 
-# In[ ]:
+# In[13]:
 
 
 # check prepared samples of images
@@ -198,7 +203,7 @@ list(filter(lambda x: x.endswith("_sample_yoloV2.zip"), os.listdir(".")))
 
 # # Extract captions for images
 
-# In[ ]:
+# In[14]:
 
 
 # extract captions from zip
@@ -212,10 +217,10 @@ def get_captions_for_fns(fns, zip_fn, zip_json_path):
     fn_to_caps = dict(fn_to_caps)
     return list(map(lambda x: fn_to_caps[x], fns))
     
-train_captions = get_captions_for_fns(train_img_fns, "captions_train-val2014.zip", 
+train_captions = get_captions_for_fns(train_img_fns, "../data/coco/captions_train-val2014.zip", 
                                       "annotations/captions_train2014.json")
 
-val_captions = get_captions_for_fns(val_img_fns, "captions_train-val2014.zip", 
+val_captions = get_captions_for_fns(val_img_fns, "../data/coco/captions_train-val2014.zip", 
                                       "annotations/captions_val2014.json")
 
 # check shape
@@ -223,7 +228,7 @@ print(len(train_img_fns), len(train_captions))
 print(len(val_img_fns), len(val_captions))
 
 
-# In[ ]:
+# In[15]:
 
 
 # look at training example (each has 5 captions)
@@ -231,29 +236,27 @@ def show_trainig_example(train_img_fns, train_captions, example_idx=0):
     """
     You can change example_idx and see different images
     """
-    zf = zipfile.ZipFile("train2014_sample_yoloV2.zip")
+    zf = zipfile.ZipFile("../data/coco/train2014_sample_yoloV2.zip")
     captions_by_file = dict(zip(train_img_fns, train_captions))
     all_files = set(train_img_fns)
     found_files = list(filter(lambda x: x.filename.rsplit("/")[-1] in all_files, zf.filelist))
     example = found_files[example_idx]
     img = utils.decode_image_from_buf(zf.read(example))
-    plt.imshow(utils.image_center_crop(img))
-    plt.title("\n".join(captions_by_file[example.filename.rsplit("/")[-1]]))
-    plt.show()
+
     
 show_trainig_example(train_img_fns, train_captions, example_idx=142)
 
 
 # # Prepare captions for training
 
-# In[ ]:
+# In[16]:
 
 
 # preview captions data
 train_captions[:2]
 
 
-# In[ ]:
+# In[17]:
 
 
 from collections import Counter
@@ -315,7 +318,7 @@ def caption_tokens_to_indices(captions, vocab):
     return res
 
 
-# In[ ]:
+# In[18]:
 
 
 # prepare vocabulary
@@ -324,7 +327,7 @@ vocab_inverse = {idx: w for w, idx in vocab.items()}
 print(len(vocab))
 
 
-# In[ ]:
+# In[19]:
 
 
 # replace tokens with indices
@@ -336,7 +339,7 @@ val_captions_indexed = caption_tokens_to_indices(val_captions, vocab)
 # 
 # We will crunch LSTM through all the tokens, but we will ignore padding tokens during loss calculation.
 
-# In[ ]:
+# In[20]:
 
 
 # we will use this during training
@@ -380,7 +383,7 @@ def batch_captions_to_matrix(batch_captions, pad_idx, max_len=None):
 # 
 # <img src="images/encoder_decoder_explained.png" style="width:50%">
 
-# In[ ]:
+# In[21]:
 
 
 IMG_EMBED_SIZE = train_img_embeds.shape[1]
@@ -393,7 +396,7 @@ LOGIT_BOTTLENECK = 256
 pad_idx = vocab[PAD]
 
 
-# In[ ]:
+# In[22]:
 
 
 # remember to reset the graph if you want to start building it from scratch!
@@ -413,7 +416,7 @@ s = tf.InteractiveSession()
 # dense_layer(b)  # and again
 # ```
 
-# In[ ]:
+# In[23]:
 
 
 class decoder:
@@ -488,7 +491,7 @@ class decoder:
     loss = tf.reduce_mean(tf.boolean_mask(xent, flat_loss_mask))
 
 
-# In[ ]:
+# In[24]:
 
 
 # define optimizer operation to minimize the loss
@@ -506,14 +509,14 @@ s.run(tf.global_variables_initializer())
 # ## Training loop
 # Evaluate train and validation metrics through training and log them. Ensure that loss decreases.
 
-# In[ ]:
+# In[25]:
 
 
 train_captions_indexed = np.array(train_captions_indexed)
 val_captions_indexed = np.array(val_captions_indexed)
 
 
-# In[ ]:
+# In[26]:
 
 
 # generate batch via random sampling of images and captions for them,
@@ -545,16 +548,16 @@ def generate_batch(images_embeddings, indexed_captions, batch_size, max_len=None
             decoder.sentences: batch_captions_matrix}
 
 
-# In[ ]:
+# In[27]:
 
 
 batch_size = 128
-n_epochs = 2
-n_batches_per_epoch = 1000
+n_epochs = 50
+n_batches_per_epoch = 200
 n_validation_batches = 100  # how many batches are used for validation after each epoch
 
 
-# In[ ]:
+# In[28]:
 
 
 # we can load trained weights here
@@ -565,49 +568,49 @@ saver.restore(s, os.path.abspath("weights"))
 
 # Look at the training and validation loss, they should be decreasing!
 
-# In[ ]:
+# In[29]:
 
 
-# actual training loop
-MAX_LEN = 20  # truncate long captions to speed up training
+# # actual training loop
+# MAX_LEN = 20  # truncate long captions to speed up training
 
-# to make training reproducible
-np.random.seed(42)
-random.seed(42)
+# # to make training reproducible
+# np.random.seed(42)
+# random.seed(42)
 
-for epoch in range(n_epochs):
+# for epoch in range(n_epochs):
     
-    train_loss = 0
-    pbar = tqdm.tqdm_notebook(range(n_batches_per_epoch))
-    counter = 0
-    for _ in pbar:
-        train_loss += s.run([decoder.loss, train_step], 
-                            generate_batch(train_img_embeds, 
-                                           train_captions_indexed, 
-                                           batch_size, 
-                                           MAX_LEN))[0]
-        counter += 1
-        pbar.set_description("Training loss: %f" % (train_loss / counter))
+#     train_loss = 0
+#     pbar = tqdm.tqdm_notebook(range(n_batches_per_epoch))
+#     counter = 0
+#     for _ in pbar:
+#         train_loss += s.run([decoder.loss, train_step], 
+#                             generate_batch(train_img_embeds, 
+#                                            train_captions_indexed, 
+#                                            batch_size, 
+#                                            MAX_LEN))[0]
+#         counter += 1
+#         pbar.set_description("Training loss: %f" % (train_loss / counter))
         
-    train_loss /= n_batches_per_epoch
+#     train_loss /= n_batches_per_epoch
     
-    val_loss = 0
-    for _ in range(n_validation_batches):
-        val_loss += s.run(decoder.loss, generate_batch(val_img_embeds,
-                                                       val_captions_indexed, 
-                                                       batch_size, 
-                                                       MAX_LEN))
-    val_loss /= n_validation_batches
+#     val_loss = 0
+#     for _ in range(n_validation_batches):
+#         val_loss += s.run(decoder.loss, generate_batch(val_img_embeds,
+#                                                        val_captions_indexed, 
+#                                                        batch_size, 
+#                                                        MAX_LEN))
+#     val_loss /= n_validation_batches
     
-    print('Epoch: {}, train loss: {}, val loss: {}'.format(epoch, train_loss, val_loss))
+#     print('Epoch: {}, train loss: {}, val loss: {}'.format(epoch, train_loss, val_loss))
 
-    # save weights after finishing epoch
-    saver.save(s, os.path.abspath("weights_{}".format(epoch)))
+#     # save weights after finishing epoch
+#     saver.save(s, os.path.abspath("../data/coco/weights/weights_{}".format(epoch)))
     
-print("Finished!")
+# print("Finished!")
 
 
-# In[ ]:
+# In[30]:
 
 
 # check that it's learnt something, outputs accuracy of next word prediction (should be around 0.5)
@@ -629,14 +632,14 @@ def check_after_training(n_examples):
         print("Truth:", decode_sentence(truth.reshape((batch_size, -1))[example_idx]))
         print("")
 
-check_after_training(3)
+# check_after_training(3)
 
 
-# In[ ]:
+# In[31]:
 
 
-# save graph weights to file!
-saver.save(s, os.path.abspath("weights"))
+# # save graph weights to file!
+# saver.save(s, os.path.abspath("../data/coco/weights/weights"))
 
 
 # # Applying model
@@ -650,13 +653,13 @@ saver.save(s, os.path.abspath("weights"))
 # - use predicted token as an input at next time step
 # - iterate until we predict an END token
 
-# In[ ]:
+# In[32]:
 
 
 class final_model:
     # CNN encoder
     encoder, preprocess_for_model = get_yolo_encoder()
-    saver.restore(s, os.path.abspath("weights"))  # keras applications corrupt our graph, so we restore trained weights
+    saver.restore(s, os.path.abspath("../data/coco/weights/weights"))  # keras applications corrupt our graph, so we restore trained weights
     
     # containers for current lstm state
     lstm_c = tf.Variable(tf.zeros([1, LSTM_UNITS]), name="cell")
@@ -690,17 +693,17 @@ class final_model:
     one_step = new_probs, tf.assign(lstm_c, new_c), tf.assign(lstm_h, new_h)
 
 
-# In[ ]:
+# In[81]:
 
 
-# look at how temperature works for probability distributions
-# for high temperature we have more uniform distribution
-_ = np.array([0.5, 0.4, 0.1])
-for t in [0.01, 0.1, 1, 10, 100]:
-    print(" ".join(map(str, _**(1/t) / np.sum(_**(1/t)))), "with temperature", t)
+# # look at how temperature works for probability distributions
+# # for high temperature we have more uniform distribution
+# _ = np.array([0.5, 0.4, 0.1])
+# for t in [0.01, 0.1, 1, 10, 100]:
+#     print(" ".join(map(str, _**(1/t) / np.sum(_**(1/t)))), "with temperature", t)
 
 
-# In[ ]:
+# In[34]:
 
 
 # this is an actual prediction loop
@@ -733,61 +736,14 @@ def generate_caption(image, t=1, sample=False, max_len=20):
             next_word = np.argmax(next_word_probs)
 
         caption.append(next_word)
+        # set_trace()
         if next_word == vocab[END]:
             break
        
     return list(map(vocab_inverse.get, caption))
 
 
-# In[ ]:
-
-
-def beam_search_predictions(image, beam_index = 3):
-    start = [word2idx["<start>"]]
-    
-    # start_word[0][0] = index of the starting word
-    # start_word[0][1] = probability of the word predicted
-    start_word = [[start, 0.0]]
-    
-    while len(start_word[0][0]) < max_len:
-        temp = []
-        for s in start_word:
-            par_caps = sequence.pad_sequences([s[0]], maxlen=max_len, padding='post')
-            e = encoding_test[image[len(images):]]
-            preds = final_model.predict([np.array([e]), np.array(par_caps)])
-            
-            # Getting the top <beam_index>(n) predictions
-            word_preds = np.argsort(preds[0])[-beam_index:]
-            
-            # creating a new list so as to put them via the model again
-            for w in word_preds:
-                next_cap, prob = s[0][:], s[1]
-                next_cap.append(w)
-                prob += preds[0][w]
-                temp.append([next_cap, prob])
-                    
-        start_word = temp
-        # Sorting according to the probabilities
-        start_word = sorted(start_word, reverse=False, key=lambda l: l[1])
-        # Getting the top words
-        start_word = start_word[-beam_index:]
-    
-    start_word = start_word[-1][0]
-    intermediate_caption = [idx2word[i] for i in start_word]
-
-    final_caption = []
-    
-    for i in intermediate_caption:
-        if i != '<end>':
-            final_caption.append(i)
-        else:
-            break
-    
-    final_caption = ' '.join(final_caption[1:])
-    return final_caption
-
-
-# In[ ]:
+# In[80]:
 
 
 # look at validation prediction example
@@ -801,8 +757,8 @@ def apply_model_to_image_raw_bytes(raw):
     print(' '.join(generate_caption(img)[1:-1]))
     plt.show()
 
-def show_valid_example(val_img_fns, example_idx=0):
-    zf = zipfile.ZipFile("val2014_sample_yoloV2.zip")
+def show_valid_example(val_img_fns, example_idx=1):
+    zf = zipfile.ZipFile("../data/coco/val2014_sample_yoloV2.zip")
     all_files = set(val_img_fns)
     found_files = list(filter(lambda x: x.filename.rsplit("/")[-1] in all_files, zf.filelist))
     example = found_files[example_idx]
@@ -812,20 +768,286 @@ def show_valid_example(val_img_fns, example_idx=0):
     apply_model_to_image_raw_bytes(zf.read(example))
      
     
-show_valid_example(val_img_fns, example_idx=20)
+
+
+from tqdm import tqdm
+def apply_model_to_image_raw_bytes_return_captions(raw):
+    img = utils.decode_image_from_buf(raw)
+    img = utils.crop_and_preprocess(img, (IMG_SIZE, IMG_SIZE), final_model.preprocess_for_model)
+    return generate_caption(img)[1:-1]
+
+def predict_single_val_captions(dataset, img_fns, example_idx=0):
+    """
+    input:
+        dataset is either 'val' or 'train'
+        img_fns is either val_img_fns or train_img_fns
+    """
+    if dataset == 'val':
+        zf = zipfile.ZipFile("../data/coco/val2014.zip")
+    if dataset == 'train':
+        zf = zipfile.ZipFile("../data/coco/train2014.zip")
+    all_files = set(img_fns)
+    found_files = list(filter(lambda x: x.filename.rsplit("/")[-1] in all_files, zf.filelist))
+    example = found_files[example_idx]
+#     print(str(example).split()[1].split('/')[1][:-1])
+    
+#     Image(filename='../../YAD2K/images/val2014_yoloV2/' + str(str(example).split()[1].split('/')[1][:-1]))
+
+    return apply_model_to_image_raw_bytes_return_captions(zf.read(example))
+    
+def predict_10_captions(dataset):
+    print('predicting the captions for {} dataset ...'.format(dataset))
+    predicted_captions = []
+    if dataset == 'val':
+        img_fns = val_img_fns
+    if dataset == 'train':
+        img_fns = train_img_fns
+        
+    for img_idx in tqdm(range(10)):
+        predicted_captions.append(predict_single_val_captions(dataset,val_img_fns, example_idx=img_idx))
+    return predicted_captions
+ 
+
+# predict_10_captions('val')
+# In[40]:
+
+
+def tokenize_captions(captions):
+    from tokenize import tokenize
+    tokenized_captions = []
+    for exm in range(len(captions)):
+        tokenized_example =[]
+        for num_caps in range(len(captions[exm])):
+            tokenized_example.append(captions[exm][num_caps].split())
+        tokenized_captions.append(tokenized_example)
+    return tokenized_captions
+
+
+
+
+
+import nltk
+def corpus_bleu_score(references, hypotheses):
+    return nltk.translate.bleu_score.corpus_bleu(references, hypotheses)
+def sentence_bleu_score(references, hypotheses):
+    return nltk.translate.bleu_score.sentence_bleu(references, hypotheses)
+
+
+# In[45]:
+
+
+# corpus_bleu_score(reference_val_captions[:100],predicted_val_captions[:100])
+
+
+# In[74]:
+
+
+# this is an actual prediction loop
+def generate_next_word_probs(image, caption, t=1, sample=False, max_len=20):
+    """
+    Generate caption for given image.
+    if `sample` is True, we will sample next token from predicted probability distribution.
+    `t` is a temperature during that sampling,
+        higher `t` causes more uniform-like distribution = more chaos.
+    """
+    # condition lstm on the image
+    s.run(final_model.init_lstm, 
+          {final_model.input_images: [image]})
+    
+    # current caption
+    # start with only START token
+
+
+    next_word_probs = s.run(final_model.one_step, 
+                            {final_model.current_word: [caption[-1]]})[0]
+    next_word_probs = next_word_probs.ravel()
+
+    # apply temperature
+    next_word_probs = next_word_probs**(1/t) / np.sum(next_word_probs**(1/t))
+
+#     if sample:
+#         next_word = np.random.choice(range(len(vocab)), p=next_word_probs)
+#     else:
+#         next_word = np.argmax(next_word_probs)
+
+#     caption.append(next_word)
+#     if next_word == vocab[END]:
+#         break
+       
+#     return list(map(vocab_inverse.get, caption))
+    return next_word_probs
+
+
+
+def apply_model_to_image_raw_bytes_return_next_word_probs(raw, par_caption):
+    img = utils.decode_image_from_buf(raw)
+    img = utils.crop_and_preprocess(img, (IMG_SIZE, IMG_SIZE), final_model.preprocess_for_model)
+    return generate_next_word_probs(img, par_caption)
+
+def apply_encoder_to_image_raw_bytes_return_next_word(raw):
+    img = utils.decode_image_from_buf(raw)
+    img = utils.crop_and_preprocess(img, (IMG_SIZE, IMG_SIZE), final_model.preprocess_for_model)
+    return yolo_encoder(img)
+
+def run_beam_on_val_single_caption(dataset, example_idx=0):
+    """
+    input:
+        dataset is either 'val' or 'train'
+        img_fns is either val_img_fns or train_img_fns
+    """
+    if dataset == 'val':
+        zf = zipfile.ZipFile("../data/coco/val2014.zip")
+        img_fns = val_img_fns
+    if dataset == 'train':
+        zf = zipfile.ZipFile("../data/coco/train2014.zip")
+        img_fns = train_img_fns
+    all_files = set(img_fns)
+    found_files = list(filter(lambda x: x.filename.rsplit("/")[-1] in all_files, zf.filelist))
+    example = found_files[example_idx]
+#     print(str(example).split()[1].split('/')[1][:-1])
+    
+#     Image(filename='../../YAD2K/images/val2014_yoloV2/' + str(str(example).split()[1].split('/')[1][:-1]))
+
+    return beam_search_predictions(zf.read(example))
+    
+# def run_beam_search(dataset):
+#     print('predicting the captions for {} dataset ...'.format(dataset))
+#     predicted_captions = []
+#     if dataset == 'val':
+#         img_fns = val_img_fns
+#     if dataset == 'train':
+#         img_fns = train_img_fns
+        
+#     for img_idx in tqdm(range(1)):
+#         predict_single_val_captions(dataset,val_img_fns, example_idx=img_idx)
+#     return predicted_captions
+
+
+# In[84]:
+
+
+def beam_search_predictions(image, beam_index = 3, max_len=20):
+    start = [vocab[START]]
+    
+    # start_word[0][0] = index of the starting word
+    # start_word[0][1] = probability of the word predicted
+    start_word = [[start, 0.0]]
+    
+    while len(start_word[0][0]) < max_len:
+        temp = []
+        for s in start_word:
+            par_caps = sequence.pad_sequences([s[0]], maxlen=max_len, padding='post')
+            set_trace()
+            preds = apply_model_to_image_raw_bytes_return_next_word_probs(image, s[0])
+            # set_trace()
+            # Getting the top <beam_index>(n) predictions
+            word_preds = np.argsort(preds)[-beam_index:]
+            
+            # creating a new list so as to put them via the model again
+            for w in word_preds:
+                next_cap, prob = s[0][:], s[1]
+                next_cap.append(w)
+                prob += preds[w]
+                temp.append([next_cap, prob])
+                    
+        start_word = temp
+        # Sorting according to the probabilities
+        start_word = sorted(start_word, reverse=False, key=lambda l: l[1])
+        # Getting the top words
+        start_word = start_word[-beam_index:]
+    
+    start_word = start_word[-1][0]
+    intermediate_caption = [vocab_inverse[i] for i in start_word]
+
+    final_caption = []
+    
+    for i in intermediate_caption:
+        if i != END:
+            final_caption.append(i)
+        else:
+            break
+    set_trace()
+    final_caption = ' '.join(final_caption[1:])
+    return final_caption
 
 
 # In[ ]:
 
 
-Image(filename='../../YAD2K/images/val2014_yoloV2/COCO_val2014_000000553141.jpg') 
+
+# beam_search_predictions(img)
+run_beam_on_val_single_caption(dataset='val', example_idx=0)
+
+
+# In[47]:
+
+
+def generate_beam_captions(model, image, beam_size):
+    start = [vocab[START]]
+    captions = [[start,0.0]]
+    set_trace()
+    while(len(captions[0][0]) < cg.max_cap_len):
+        temp_captions = []
+        for caption in captions:
+            partial_caption = sequence.pad_sequences([caption[0]], maxlen=cg.max_cap_len, padding='post')
+            next_words_pred = model.predict([np.asarray([image]), np.asarray(partial_caption)])[0]
+            next_words = np.argsort(next_words_pred)[-beam_size:]
+            for word in next_words:
+                new_partial_caption, new_partial_caption_prob = caption[0][:], caption[1]
+                new_partial_caption.append(word)
+                new_partial_caption_prob+=next_words_pred[word]
+                temp_captions.append([new_partial_caption,new_partial_caption_prob])
+        captions = temp_captions
+        captions.sort(key = lambda l:l[1])
+        captions = captions[-beam_size:]
+
+    return captions
 
 
 # In[ ]:
 
 
-# sample more images from validation
-for idx in np.random.choice(range(len(zipfile.ZipFile("val2014_sample_yoloV2.zip").filelist) - 1), 20):
-    show_valid_example(val_img_fns, example_idx=idx)
-    time.sleep(1)
+# def beam_search_predictions(image, beam_index = 3):
+#     start = [word2idx["<start>"]]
+    
+#     # start_word[0][0] = index of the starting word
+#     # start_word[0][1] = probability of the word predicted
+#     start_word = [[start, 0.0]]
+    
+#     while len(start_word[0][0]) < max_len:
+#         temp = []
+#         for s in start_word:
+#             par_caps = sequence.pad_sequences([s[0]], maxlen=max_len, padding='post')
+# #             e = encoding_test[image[len(images):]]
+#             preds = final_model.predict([np.array([e]), np.array(par_caps)])
+            
+#             # Getting the top <beam_index>(n) predictions
+#             word_preds = np.argsort(preds[0])[-beam_index:]
+            
+#             # creating a new list so as to put them via the model again
+#             for w in word_preds:
+#                 next_cap, prob = s[0][:], s[1]
+#                 next_cap.append(w)
+#                 prob += preds[0][w]
+#                 temp.append([next_cap, prob])
+                    
+#         start_word = temp
+#         # Sorting according to the probabilities
+#         start_word = sorted(start_word, reverse=False, key=lambda l: l[1])
+#         # Getting the top words
+#         start_word = start_word[-beam_index:]
+    
+#     start_word = start_word[-1][0]
+#     intermediate_caption = [idx2word[i] for i in start_word]
+
+#     final_caption = []
+    
+#     for i in intermediate_caption:
+#         if i != '<end>':
+#             final_caption.append(i)
+#         else:
+#             break
+    
+#     final_caption = ' '.join(final_caption[1:])
+#     return final_caption
 
