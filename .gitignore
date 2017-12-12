@@ -24,6 +24,7 @@
 *.pkl
 *.jpg
 *.log
+*.png
 *.h5
 *.pickle
 *.index
