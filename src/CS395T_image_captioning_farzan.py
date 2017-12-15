@@ -10,7 +10,7 @@
 
 # # Import stuff
 
-# In[7]:
+# In[1]:
 
 
 import sys
@@ -18,7 +18,7 @@ sys.path.append("../utils")
 sys.path.append("..")
 
 
-# In[8]:
+# In[2]:
 
 
 import tensorflow as tf
@@ -62,14 +62,14 @@ from IPython.display import Image
 # 
 # We will use pre-trained yoloV2, yolo9000, and InceptionV3 model for CNN encoder (https://research.googleblog.com/2016/03/train-your-own-image-classifier-with.html) and extract its last hidden layer as an embedding:
 
-# In[9]:
+# In[3]:
 
 
 # IMG_SIZE = 299
 IMG_SIZE = 608
 
 
-# In[10]:
+# In[4]:
 
 
 # # we take the last hidden layer of IncetionV3 as an image embedding
@@ -83,7 +83,7 @@ IMG_SIZE = 608
 #     return model, preprocess_for_model
 
 
-# In[11]:
+# In[5]:
 
 
 def yolo_preprocess_input(x):
@@ -91,10 +91,10 @@ def yolo_preprocess_input(x):
     return x
 
 
-# In[13]:
+# In[6]:
 
 
-action = 'AveragePooling2D'
+action = 'GlobalAvgPool2D'
 
 # yolo_model_location = '/home/anvaribs/YAD2K/model_data/yolo.h5'
 yolo_model_location = '../models/yolo.h5'
@@ -108,8 +108,10 @@ def get_yolo_encoder():
 
     if action == 'GlobalAvgPool2D':
         finalOutput = keras.layers.GlobalAvgPool2D()(yolo_model.layers[-2].output)
+    if action == 'GlobalAvgPool2D_last':
+        finalOutput = keras.layers.GlobalAvgPool2D()(yolo_model.layers[-1].output)
     if action == 'AveragePooling2D':
-        finalOutput = keras.layers.AveragePooling2D((5, 5), strides=(5, 5), name='added_pool')(yolo_model.layers[-1].output)
+        finalOutput = keras.layers.AveragePooling2D((5, 5), strides=(5, 5), name='added_pool')(yolo_model.layers[-2].output)
         finalOutput = keras.layers.Flatten()(finalOutput)
     if action == 'AutoEncoder':
         pass
@@ -119,18 +121,20 @@ def get_yolo_encoder():
     return yolo_model, yolo_preprocess_for_model
 
 
-# In[14]:
+# In[7]:
 
 
 yolo_encoder, yolo_preprocess_for_model = get_yolo_encoder()
 
 
-# In[19]:
+# In[8]:
 
 
 # yolo_encoder.summary()
-from keras.utils import plot_model
-plot_model(yolo_encoder, to_file='../models/yolo_encoder_{}.png'.format(action), show_shapes=True)
+# from keras.utils import plot_model
+# plot_model(yolo_encoder, to_file='../models/yolo_encoder_{}.png'.format(action), show_shapes=True)
+# from IPython.display import Image
+# Image('../models/yolo_encoder_{}.png'.format(action))
 
 
 # Features extraction takes too much time on CPU:
@@ -141,7 +145,7 @@ plot_model(yolo_encoder, to_file='../models/yolo_encoder_{}.png'.format(action),
 # 
 # So we've can do it beforehand and save it on the disk.
 
-# In[20]:
+# In[9]:
 
 
 train2014_zip = '../data/coco/train2014.zip'
@@ -151,24 +155,25 @@ val2014_zip = '../data/coco/val2014.zip'
 # In[10]:
 
 
-# load pre-trained model
-K.clear_session()
-encoder, preprocess_for_model = get_yolo_encoder()
+# # load pre-trained model
+# K.clear_session()
+# encoder, preprocess_for_model = get_yolo_encoder()
 
-# extract train features
-print("\n\n create training image embeddings ...")
-train_img_embeds, train_img_fns = utils.apply_model(
-    train2014_zip, encoder, preprocess_for_model, input_shape=(IMG_SIZE, IMG_SIZE))
-utils.save_pickle(train_img_embeds, "../data/coco/extracted/train_img_embeds_yoloV2_{}.pickle".format(action))
-utils.save_pickle(train_img_fns, "../data/coco/extracted/train_img_fns_yoloV2_{}.pickle".format(action))
+# # extract train features
+# print("\n\n create training image embeddings ...")
+# train_img_embeds, train_img_fns = utils.apply_model(
+#     train2014_zip, encoder, preprocess_for_model, input_shape=(IMG_SIZE, IMG_SIZE))
+# print("\n\n saving training features ...")
+# utils.save_pickle(train_img_embeds, "../data/coco/extracted/train_img_embeds_yoloV2_{}.pickle".format(action))
+# utils.save_pickle(train_img_fns, "../data/coco/extracted/train_img_fns_yoloV2_{}.pickle".format(action))
 
-# extract validation features
-print("\n\n create validation image embeddings ...")
-val_img_embeds, val_img_fns = utils.apply_model(
-    val2014_zip, encoder, preprocess_for_model, input_shape=(IMG_SIZE, IMG_SIZE))
-utils.save_pickle(val_img_embeds, "../data/coco/extracted/val_img_embeds_yoloV2_{}.pickle".format(action))
-utils.save_pickle(val_img_fns, "../data/coco/extracted/val_img_fns_yoloV2_{}.pickle".format(action))
-
+# # extract validation features
+# print("\n\n create validation image embeddings ...")
+# val_img_embeds, val_img_fns = utils.apply_model(
+#     val2014_zip, encoder, preprocess_for_model, input_shape=(IMG_SIZE, IMG_SIZE))
+# print("\n\n saving validation features ...")
+# utils.save_pickle(val_img_embeds, "../data/coco/extracted/val_img_embeds_yoloV2_{}.pickle".format(action))
+# utils.save_pickle(val_img_fns, "../data/coco/extracted/val_img_fns_yoloV2_{}.pickle".format(action))
 
 
 # In[11]:
@@ -186,7 +191,7 @@ utils.save_pickle(val_img_fns, "../data/coco/extracted/val_img_fns_yoloV2_{}.pic
 # sample_zip(val2014_zip, "../data/coco/val2014_sample_yoloV2.zip", rate = 0.01, seed = 42)
 
 
-# In[22]:
+# In[12]:
 
 
 
@@ -200,7 +205,7 @@ print("training data: ", train_img_embeds.shape, len(train_img_fns))
 print("valicatoin data: ", val_img_embeds.shape, len(val_img_fns))
 
 
-# In[23]:
+# In[13]:
 
 
 # check prepared samples of images
@@ -209,7 +214,7 @@ list(filter(lambda x: x.endswith("_sample_yoloV2.zip"), os.listdir(".")))
 
 # # Extract captions for images
 
-# In[24]:
+# In[14]:
 
 
 # extract captions from zip
@@ -234,7 +239,7 @@ print("training captions: ", len(train_img_fns), len(train_captions))
 print("valicatoin captions: ", len(val_img_fns), len(val_captions))
 
 
-# In[6]:
+# In[15]:
 
 
 # # look at training example (each has 5 captions)
@@ -257,14 +262,14 @@ print("valicatoin captions: ", len(val_img_fns), len(val_captions))
 
 # # Prepare captions for training
 
-# In[25]:
+# In[16]:
 
 
 # # preview captions data
 # train_captions[:2]
 
 
-# In[26]:
+# In[17]:
 
 
 from collections import Counter
@@ -326,7 +331,7 @@ def caption_tokens_to_indices(captions, vocab):
     return res
 
 
-# In[27]:
+# In[18]:
 
 
 # prepare vocabulary
@@ -335,7 +340,7 @@ vocab_inverse = {idx: w for w, idx in vocab.items()}
 print("length of vocab: ", len(vocab))
 
 
-# In[28]:
+# In[19]:
 
 
 # replace tokens with indices
@@ -347,7 +352,7 @@ val_captions_indexed = caption_tokens_to_indices(val_captions, vocab)
 # 
 # We will crunch LSTM through all the tokens, but we will ignore padding tokens during loss calculation.
 
-# In[32]:
+# In[20]:
 
 
 # we will use this during training
@@ -391,20 +396,24 @@ def batch_captions_to_matrix(batch_captions, pad_idx, max_len=None):
 # 
 # <img src="images/encoder_decoder_explained.png" style="width:50%">
 
-# In[33]:
+# In[21]:
 
 
 IMG_EMBED_SIZE = train_img_embeds.shape[1]
 # IMG_EMBED_BOTTLENECK = 120
 IMG_EMBED_BOTTLENECK = 256
 WORD_EMBED_SIZE = 100
-LSTM_UNITS = 300
+RNN_UNITS = 300
 # LOGIT_BOTTLENECK = 120
 LOGIT_BOTTLENECK = 256
 pad_idx = vocab[PAD]
+NUM_LAYERS = 2
+# RNN_TYPE = 'regular_LSTM'
+# RNN_TYPE = 'bidirectional_LSTM'
+RNN_TYPE = 'stacked_LSTM'
 
 
-# In[34]:
+# In[22]:
 
 
 # remember to reset the graph if you want to start building it from scratch!
@@ -424,7 +433,84 @@ s = tf.InteractiveSession()
 # dense_layer(b)  # and again
 # ```
 
-# In[35]:
+# In[23]:
+
+
+# class decoder:
+#     # [batch_size, IMG_EMBED_SIZE] of CNN image features
+#     img_embeds = tf.placeholder('float32', [None, IMG_EMBED_SIZE])
+#     # [batch_size, time steps] of word ids
+#     sentences = tf.placeholder('int32', [None, None])
+    
+#     # we use bottleneck here to reduce the number of parameters
+#     # image embedding -> bottleneck
+#     img_embed_to_bottleneck = L.Dense(IMG_EMBED_BOTTLENECK, 
+#                                       input_shape=(None, IMG_EMBED_SIZE), 
+#                                       activation='elu')
+#     # image embedding bottleneck -> lstm initial state
+#     img_embed_bottleneck_to_h0 = L.Dense(RNN_UNITS,
+#                                          input_shape=(None, IMG_EMBED_BOTTLENECK),
+#                                          activation='elu')
+ 
+
+#     # word -> embedding
+#     word_embed = L.Embedding(len(vocab), WORD_EMBED_SIZE)
+
+#     lstm = tf.nn.rnn_cell.LSTMCell(RNN_UNITS)
+    
+#     # we use bottleneck here to reduce model complexity
+#     # lstm output -> logits bottleneck
+#     token_logits_bottleneck = L.Dense(LOGIT_BOTTLENECK, activation="elu")
+#     # logits bottleneck -> logits for next token prediction
+#     token_logits = L.Dense(len(vocab))
+    
+#     # initial lstm cell state of shape (None, RNN_UNITS),
+#     # we need to condition it on `img_embeds` placeholder.
+#     c0 = h0 = img_embed_bottleneck_to_h0(img_embed_to_bottleneck(img_embeds))
+
+#     # embed all tokens but the last for lstm input,
+#     # remember that L.Embedding is callable,
+#     # use `sentences` placeholder as input.
+#     word_embeds = word_embed(sentences[:,:-1])
+    
+#     # during training we use ground truth tokens `word_embeds` as context for next token prediction.
+#     # that means that we know all the inputs for our lstm and can get 
+#     # all the hidden states with one tensorflow operation (tf.nn.dynamic_rnn).
+#     # `hidden_states` has a shape of [batch_size, time steps, RNN_UNITS].
+#     hidden_states, _ = tf.nn.dynamic_rnn(lstm, word_embeds,
+#                                          initial_state=tf.nn.rnn_cell.LSTMStateTuple(c0, h0))
+
+#     # now we need to calculate token logits for all the hidden states
+    
+#     # first, we reshape `hidden_states` to [-1, RNN_UNITS]
+#     flat_hidden_states = tf.reshape(hidden_states, [-1, RNN_UNITS])
+
+#     # then, we calculate logits for next tokens using `token_logits` layer
+#     flat_token_logits = token_logits(token_logits_bottleneck(flat_hidden_states))
+    
+#     # then, we flatten the ground truth token ids.
+#     # remember, that we predict next tokens for each time step,
+#     # use `sentences` placeholder.
+#     flat_ground_truth =tf.reshape(sentences[:,1:],[-1,])
+
+#     # we need to know where we have real tokens (not padding) in `flat_ground_truth`,
+#     # we don't want to propagate the loss for padded output tokens,
+#     # fill `flat_loss_mask` with 1.0 for real tokens (not pad_idx) and 0.0 otherwise.
+#     flat_loss_mask = tf.not_equal(flat_ground_truth, pad_idx)
+
+#     # compute cross-entropy between `flat_ground_truth` and `flat_token_logits` predicted by lstm
+#     xent = tf.nn.sparse_softmax_cross_entropy_with_logits(
+#         labels=flat_ground_truth, 
+#         logits=flat_token_logits
+#     )
+
+#     # compute average `xent` over tokens with nonzero `flat_loss_mask`.
+#     # we don't want to account misclassification of PAD tokens, because that doesn't make sense,
+#     # we have PAD tokens for batching purposes only!
+#     loss = tf.reduce_mean(tf.boolean_mask(xent, flat_loss_mask))
+
+
+# In[24]:
 
 
 class decoder:
@@ -439,13 +525,39 @@ class decoder:
                                       input_shape=(None, IMG_EMBED_SIZE), 
                                       activation='elu')
     # image embedding bottleneck -> lstm initial state
-    img_embed_bottleneck_to_h0 = L.Dense(LSTM_UNITS,
+    img_embed_bottleneck_to_h0 = L.Dense(RNN_UNITS,
                                          input_shape=(None, IMG_EMBED_BOTTLENECK),
                                          activation='elu')
+ 
+
     # word -> embedding
     word_embed = L.Embedding(len(vocab), WORD_EMBED_SIZE)
+
+
+    if RNN_TYPE == 'bidirectional_LSTM':
+        input_data = tf.placeholder(tf.float32, [None, None, IMG_EMBED_SIZE])
+        output_data = tf.placeholder(tf.float32, [None, args.sentence_length, args.class_size])
+        fw_cell = tf.nn.rnn_cell.LSTMCell(RNN_UNITS, state_is_tuple=True)
+        fw_cell = tf.nn.rnn_cell.DropoutWrapper(fw_cell, output_keep_prob=0.5)
+        bw_cell = tf.nn.rnn_cell.LSTMCell(RNN_UNITS, state_is_tuple=True)
+        bw_cell = tf.nn.rnn_cell.DropoutWrapper(bw_cell, output_keep_prob=0.5)
+        fw_cell = tf.nn.rnn_cell.MultiRNNCell([fw_cell] * NUM_LAYERS, state_is_tuple=True)
+        bw_cell = tf.nn.rnn_cell.MultiRNNCell([bw_cell] * NUM_LAYERS, state_is_tuple=True)
+        words_used_in_sent = tf.sign(tf.reduce_max(tf.abs(input_data), reduction_indices=2))
+        length = tf.cast(tf.reduce_sum(words_used_in_sent, reduction_indices=1), tf.int32)
+        output, _, _ = tf.nn.bidirectional_rnn(fw_cell, bw_cell,
+                                               tf.unpack(tf.transpose(input_data, perm=[1, 0, 2])),
+                                               dtype=tf.float32, sequence_length=length)
+        output = tf.reshape(tf.transpose(tf.pack(output), perm=[1, 0, 2]), [-1, 2 * RNN_UNITS])
+
+
+    if RNN_TYPE == 'stacked_LSTM':
+        stacked_lstm = tf.contrib.rnn.MultiRNNCell(
+            [tf.contrib.rnn.BasicLSTMCell(RNN_UNITS) for _ in range(NUM_LAYERS)])        
+
+    if RNN_TYPE == 'regular_LSTM':
     # lstm cell (from tensorflow)
-    lstm = tf.nn.rnn_cell.LSTMCell(LSTM_UNITS)
+        lstm = tf.nn.rnn_cell.LSTMCell(RNN_UNITS)
     
     # we use bottleneck here to reduce model complexity
     # lstm output -> logits bottleneck
@@ -453,9 +565,10 @@ class decoder:
     # logits bottleneck -> logits for next token prediction
     token_logits = L.Dense(len(vocab))
     
-    # initial lstm cell state of shape (None, LSTM_UNITS),
+    # initial lstm cell state of shape (None, RNN_UNITS),
     # we need to condition it on `img_embeds` placeholder.
     c0 = h0 = img_embed_bottleneck_to_h0(img_embed_to_bottleneck(img_embeds))
+    c1 = h1 = c0
 
     # embed all tokens but the last for lstm input,
     # remember that L.Embedding is callable,
@@ -465,14 +578,15 @@ class decoder:
     # during training we use ground truth tokens `word_embeds` as context for next token prediction.
     # that means that we know all the inputs for our lstm and can get 
     # all the hidden states with one tensorflow operation (tf.nn.dynamic_rnn).
-    # `hidden_states` has a shape of [batch_size, time steps, LSTM_UNITS].
-    hidden_states, _ = tf.nn.dynamic_rnn(lstm, word_embeds,
-                                         initial_state=tf.nn.rnn_cell.LSTMStateTuple(c0, h0))
+    # `hidden_states` has a shape of [batch_size, time steps, RNN_UNITS].
+    hidden_states, final_state = tf.nn.dynamic_rnn(cell=stacked_lstm, inputs=word_embeds,
+                                         initial_state=(tf.nn.rnn_cell.LSTMStateTuple(c0, h0),
+                                                        tf.nn.rnn_cell.LSTMStateTuple(c1, h1)))
 
     # now we need to calculate token logits for all the hidden states
     
-    # first, we reshape `hidden_states` to [-1, LSTM_UNITS]
-    flat_hidden_states = tf.reshape(hidden_states, [-1, LSTM_UNITS])
+    # first, we reshape `hidden_states` to [-1, RNN_UNITS]
+    flat_hidden_states = tf.reshape(hidden_states, [-1, RNN_UNITS])
 
     # then, we calculate logits for next tokens using `token_logits` layer
     flat_token_logits = token_logits(token_logits_bottleneck(flat_hidden_states))
@@ -499,7 +613,7 @@ class decoder:
     loss = tf.reduce_mean(tf.boolean_mask(xent, flat_loss_mask))
 
 
-# In[36]:
+# In[25]:
 
 
 # define optimizer operation to minimize the loss
@@ -517,14 +631,14 @@ s.run(tf.global_variables_initializer())
 # ## Training loop
 # Evaluate train and validation metrics through training and log them. Ensure that loss decreases.
 
-# In[37]:
+# In[26]:
 
 
 train_captions_indexed = np.array(train_captions_indexed)
 val_captions_indexed = np.array(val_captions_indexed)
 
 
-# In[38]:
+# In[27]:
 
 
 # generate batch via random sampling of images and captions for them,
@@ -556,28 +670,30 @@ def generate_batch(images_embeddings, indexed_captions, batch_size, max_len=None
             decoder.sentences: batch_captions_matrix}
 
 
-# In[41]:
+# In[37]:
 
 
-batch_size = 128
+batch_size = 512
 n_epochs = 50
-n_batches_per_epoch = 300
+n_batches_per_epoch = 500
 n_validation_batches = 100  # how many batches are used for validation after each epoch
 
 
-# In[ ]:
+# In[29]:
 
 
 # we can load trained weights here
 # we can load "weights_{epoch}" and continue training
 # uncomment the next line if you need to load weights
 
-saver.restore(s, os.path.abspath("../data/coco/weights/weights_{}".format(action)))
+# saver.restore(s, os.path.abspath("../data/coco/weights/weights_{}_RNN_{}_layers_".format(action, RNN_TYPE, NUM_LAYERS)))
+# saver.restore(s, os.path.abspath("../data/coco/weights/weights_{}".format(action)))
 
 
 # Look at the training and validation loss, they should be decreasing!
 
-# In[43]:
+# In[ ]:
+
 
 
 # actual training loop
@@ -619,36 +735,36 @@ for epoch in range(n_epochs):
 print("Finished!")
 
 
-# In[44]:
+# In[ ]:
 
 
-# check that it's learnt something, outputs accuracy of next word prediction (should be around 0.5)
-from sklearn.metrics import accuracy_score, log_loss
+# # check that it's learnt something, outputs accuracy of next word prediction (should be around 0.5)
+# from sklearn.metrics import accuracy_score, log_loss
 
-def decode_sentence(sentence_indices):
-    return " ".join(list(map(vocab_inverse.get, sentence_indices)))
+# def decode_sentence(sentence_indices):
+#     return " ".join(list(map(vocab_inverse.get, sentence_indices)))
 
-def check_after_training(n_examples):
-    fd = generate_batch(train_img_embeds, train_captions_indexed, batch_size)
-    logits = decoder.flat_token_logits.eval(fd)
-    truth = decoder.flat_ground_truth.eval(fd)
-    mask = decoder.flat_loss_mask.eval(fd).astype(bool)
-    print("Loss:", decoder.loss.eval(fd))
-    print("Accuracy:", accuracy_score(logits.argmax(axis=1)[mask], truth[mask]))
-    for example_idx in range(n_examples):
-        print("Example", example_idx)
-        print("Predicted:", decode_sentence(logits.argmax(axis=1).reshape((batch_size, -1))[example_idx]))
-        print("Truth:", decode_sentence(truth.reshape((batch_size, -1))[example_idx]))
-        print("")
+# def check_after_training(n_examples):
+#     fd = generate_batch(train_img_embeds, train_captions_indexed, batch_size)
+#     logits = decoder.flat_token_logits.eval(fd)
+#     truth = decoder.flat_ground_truth.eval(fd)
+#     mask = decoder.flat_loss_mask.eval(fd).astype(bool)
+#     print("Loss:", decoder.loss.eval(fd))
+#     print("Accuracy:", accuracy_score(logits.argmax(axis=1)[mask], truth[mask]))
+#     for example_idx in range(n_examples):
+#         print("Example", example_idx)
+#         print("Predicted:", decode_sentence(logits.argmax(axis=1).reshape((batch_size, -1))[example_idx]))
+#         print("Truth:", decode_sentence(truth.reshape((batch_size, -1))[example_idx]))
+#         print("")
 
-# check_after_training(3)
+# # check_after_training(3)
 
 
-# In[45]:
+# In[33]:
 
 
 # save graph weights to file!
-saver.save(s, os.path.abspath("../data/coco/weights/weights_{}".format(action)))
+saver.save(s, os.path.abspath("../data/coco/weights/weights_{}_RNN_{}_layers_{}".format(action, RNN_TYPE, NUM_LAYERS)))
 
 
 # # Applying model
@@ -662,7 +778,7 @@ saver.save(s, os.path.abspath("../data/coco/weights/weights_{}".format(action)))
 # - use predicted token as an input at next time step
 # - iterate until we predict an END token
 
-# In[46]:
+# In[ ]:
 
 
 class final_model:
@@ -671,8 +787,8 @@ class final_model:
     saver.restore(s, os.path.abspath("../data/coco/weights/weights_{}".format(action)))  # keras applications corrupt our graph, so we restore trained weights
     
     # containers for current lstm state
-    lstm_c = tf.Variable(tf.zeros([1, LSTM_UNITS]), name="cell")
-    lstm_h = tf.Variable(tf.zeros([1, LSTM_UNITS]), name="hidden")
+    lstm_c = tf.Variable(tf.zeros([1, RNN_UNITS]), name="cell")
+    lstm_h = tf.Variable(tf.zeros([1, RNN_UNITS]), name="hidden")
 
     # input images
     input_images = tf.placeholder('float32', [None, IMG_SIZE, IMG_SIZE, 3], name='images')
@@ -700,9 +816,10 @@ class final_model:
 
     # `one_step` outputs probabilities of next token and updates lstm hidden state
     one_step = new_probs, tf.assign(lstm_c, new_c), tf.assign(lstm_h, new_h)
+    
 
 
-# In[47]:
+# In[ ]:
 
 
 # # look at how temperature works for probability distributions
@@ -712,7 +829,7 @@ class final_model:
 #     print(" ".join(map(str, _**(1/t) / np.sum(_**(1/t)))), "with temperature", t)
 
 
-# In[48]:
+# In[ ]:
 
 
 # this is an actual prediction loop
@@ -751,42 +868,42 @@ def generate_caption(image, t=1, sample=False, max_len=20):
     return list(map(vocab_inverse.get, caption))
 
 
-# In[49]:
+# In[ ]:
 
 
-# look at validation prediction example
-def apply_model_to_image_raw_bytes(raw):
-    img = utils.decode_image_from_buf(raw)
-    fig = plt.figure(figsize=(7, 7))
-    plt.grid('off')
-    plt.axis('off')
-    plt.imshow(img)
-    img = utils.crop_and_preprocess(img, (IMG_SIZE, IMG_SIZE), final_model.preprocess_for_model)
-    print(' '.join(generate_caption(img)[1:-1]))
-    plt.show()
+# # look at validation prediction example
+# def apply_model_to_image_raw_bytes(raw):
+#     img = utils.decode_image_from_buf(raw)
+#     fig = plt.figure(figsize=(7, 7))
+#     plt.grid('off')
+#     plt.axis('off')
+#     plt.imshow(img)
+#     img = utils.crop_and_preprocess(img, (IMG_SIZE, IMG_SIZE), final_model.preprocess_for_model)
+#     print(' '.join(generate_caption(img)[1:-1]))
+#     plt.show()
 
-def show_valid_example(val_img_fns, example_idx=1):
-    zf = zipfile.ZipFile("../data/coco/val2014_sample_yoloV2.zip")
-    all_files = set(val_img_fns)
-    found_files = list(filter(lambda x: x.filename.rsplit("/")[-1] in all_files, zf.filelist))
-    example = found_files[example_idx]
-    print(str(example).split()[1].split('/')[1][:-1])
+# def show_valid_example(val_img_fns, example_idx=1):
+#     zf = zipfile.ZipFile("../data/coco/val2014_sample_yoloV2.zip")
+#     all_files = set(val_img_fns)
+#     found_files = list(filter(lambda x: x.filename.rsplit("/")[-1] in all_files, zf.filelist))
+#     example = found_files[example_idx]
+#     print(str(example).split()[1].split('/')[1][:-1])
     
-#     Image(filename='../../YAD2K/images/val2014_yoloV2/' + str(str(example).split()[1].split('/')[1][:-1]))
-    apply_model_to_image_raw_bytes(zf.read(example))
+# #     Image(filename='../../YAD2K/images/val2014_yoloV2/' + str(str(example).split()[1].split('/')[1][:-1]))
+#     apply_model_to_image_raw_bytes(zf.read(example))
      
     
-# show_valid_example(val_img_fns, example_idx=10)
+# # show_valid_example(val_img_fns, example_idx=10)
 
 
-# In[50]:
+# In[ ]:
 
 
 # Image(filename='../../YAD2K/images/val2014_yoloV2/COCO_val2014_000000553141.jpg') 
 # Image(filename='../data/coco/val2014_yoloV2/COCO_val2014_000000553141.jpg')
 
 
-# In[51]:
+# In[ ]:
 
 
 # # sample more images from validation
@@ -795,7 +912,7 @@ def show_valid_example(val_img_fns, example_idx=1):
 #     time.sleep(1)
 
 
-# In[88]:
+# In[ ]:
 
 
 from tqdm import tqdm
@@ -826,22 +943,28 @@ def run_generate_captions(dataset, number):
     """
     print('predicting the captions for {} dataset ...'.format(dataset))
     predicted_captions = []
+    predicted_captions_with_filenames = []
     if dataset == 'val':
         img_fns = val_img_fns
         zf = zipfile.ZipFile("../data/coco/val2014.zip")
+        substring_removed = 'val2014/COCO_val2014_'
     if dataset == 'train':
         img_fns = train_img_fns
         zf = zipfile.ZipFile("../data/coco/train2014.zip")
+        substring_removed = 'train2014/COCO_train2014_'
     all_files = set(img_fns)
     found_files = list(filter(lambda x: x.filename.rsplit("/")[-1] in all_files, zf.filelist))
     for img_idx in tqdm(range(number)):
         example = found_files[img_idx]
-        predicted_captions.append(apply_model_to_image_raw_bytes_return_captions(zf.read(example)))
-    return predicted_captions
+        example_number = str(int(example.filename.replace(substring_removed,'').replace('.jpg','')))
+        caption_disjoined = apply_model_to_image_raw_bytes_return_captions(zf.read(example))
+        predicted_captions.append(caption_disjoined)
+        predicted_captions_with_filenames.append(example_number + '    ' + ' '.join(caption_disjoined))
+    return predicted_captions, predicted_captions_with_filenames
  
 
 
-# In[89]:
+# In[ ]:
 
 
 def tokenize_captions(captions):
@@ -855,27 +978,67 @@ def tokenize_captions(captions):
     return tokenized_captions
 
 
-# In[91]:
+# In[ ]:
 
 
-predicted_val_captions = run_generate_captions('val', 1000)
-predicted_train_captions = run_generate_captions('train', 1000)
-utils.save_pickle(predicted_val_captions, "../data/coco/extracted/predicted_val_captions_{}.pickle".format(action))
-utils.save_pickle(predicted_train_captions, "../data/coco/extracted/predicted_train_captions_{}.pickle".format(action))
+predicted_val_captions, predicted_val_captions_with_filenames  = run_generate_captions('val', 1000)
+predicted_train_captions, predicted_train_captions_with_filenames = run_generate_captions('train', 1000)
+utils.save_pickle(predicted_val_captions, "../data/coco/extracted/predicted_val_captions_{}_RNN_{}_layers_{}.pickle".format(action, RNN_TYPE, NUM_LAYERS))
+utils.save_pickle(predicted_train_captions, "../data/coco/extracted/predicted_train_captions_{}_RNN_{}_layers_{}.pickle".format(action, RNN_TYPE, NUM_LAYERS))
 
 
-# In[109]:
+# In[ ]:
 
 
-predicted_val_captions = utils.read_pickle("../data/coco/extracted/predicted_val_captions_{}.pickle".format(action))
-predicted_train_captions = utils.read_pickle("../data/coco/extracted/predicted_train_captions_{}.pickle".format(action))
+predicted_val_captions = utils.read_pickle(
+    "../data/coco/extracted/predicted_val_captions_{}_RNN_{}_layers_{}.pickle".format(action, RNN_TYPE, NUM_LAYERS))
+predicted_train_captions = utils.read_pickle(
+    "../data/coco/extracted/predicted_train_captions_{}_RNN_{}_layers_{}.pickle".format(action, RNN_TYPE, NUM_LAYERS))
+# predicted_val_captions = utils.read_pickle(
+#     "../data/coco/extracted/predicted_val_captions_{}.pickle".format(action))
+# predicted_train_captions = utils.read_pickle(
+#     "../data/coco/extracted/predicted_train_captions_{}.pickle".format(action))
+
 # pred_val_caps_token = tokenize_captions(predicted_val_captions)
 # pred_train_caps_token = tokenize_captions(predicted_train_captions)
+
 ref_val_cap_token = tokenize_captions(val_captions)
 ref_train_cap_token = tokenize_captions(train_captions)
 
 
-# In[116]:
+# In[ ]:
+
+
+f = open("../../caption-eval/data/predicted_val_captions_with_filenames_{}_RNN_{}_layers_{}.txt".format(action, RNN_TYPE, NUM_LAYERS),'w')
+for caption in predicted_val_captions_with_filenames:
+    f.write(caption + '\n')
+f.close()
+
+f = open("../../caption-eval/data/predicted_train_captions_with_filenames_{}_RNN_{}_layers_{}.txt".format(action, RNN_TYPE, NUM_LAYERS),'w')
+for caption in predicted_train_captions_with_filenames:
+    f.write(caption + '\n')
+f.close()
+
+
+# In[ ]:
+
+
+# f = open("../../caption-eval/data/val_captions_with_filenames.txt",'w')
+# for idx, caption_pack in enumerate(val_captions[:1000]):
+#     filename = str(int(val_img_fns[idx].replace('COCO_val2014_','').replace('.jpg','')))
+#     for caption in caption_pack:
+#         f.write(filename + '    ' + caption + '\n')
+# f.close()
+
+# f = open("../../caption-eval/data/train_captions_with_filenames.txt",'w')
+# for idx, caption_pack in enumerate(train_captions[:1000]):
+#     filename = str(int(train_img_fns[idx].replace('COCO_train2014_','').replace('.jpg','')))
+#     for caption in caption_pack:
+#         f.write(filename + '    ' + caption + '\n')
+# f.close()
+
+
+# In[ ]:
 
 
 import nltk
@@ -885,7 +1048,7 @@ def sentence_bleu_score(references, hypotheses):
     return nltk.translate.bleu_score.sentence_bleu(references, hypotheses, weights=costume_weights)
 
 
-# In[117]:
+# In[ ]:
 
 
 val_blue_score_4 = corpus_bleu_score(ref_val_cap_token[:1000] ,predicted_val_captions)
@@ -898,7 +1061,7 @@ print ('val blue score_1: {}'.format(val_blue_score_1))
 print ('train blue score_1: {}'.format(train_blue_score_1))
 
 
-# In[120]:
+# In[ ]:
 
 
 # this is an actual prediction loop
@@ -957,7 +1120,7 @@ def apply_model_to_image_raw_bytes_return_next_word_probs(raw, par_caption):
 #     return predicted_captions
 
 
-# In[230]:
+# In[ ]:
 
 
 def beam_search_predictions(dataset, beam_size=3, max_len=20, number_examples=1000):
@@ -1034,15 +1197,15 @@ def beam_search_predictions(dataset, beam_size=3, max_len=20, number_examples=10
     return captions_beam, best_captions_beam
 
 
-# In[235]:
+# In[ ]:
 
 
 pred_val_beam_caps, pred_val_beam_best_caps = beam_search_predictions('val', beam_size=3, 
-                                                                      max_len=20, number_examples=30)
+                                                                      max_len=20, number_examples=100)
 # pred_train_beam_caps, pred_train_beam_best_caps = beam_search_predictions('train', beam_size=3, max_len=20, number_examples=10)
 
 
-# In[236]:
+# In[ ]:
 
 
 def tokenize_beam_captions(captions):
@@ -1053,53 +1216,29 @@ def tokenize_beam_captions(captions):
     return tokenized_captions
 
 
-# In[237]:
+# In[ ]:
 
+
+
+utils.save_pickle(pred_val_beam_caps, "../data/coco/extracted/pred_val_beam_caps_{}_RNN_{}.pickle".format(action, RNN_TYPE))
+utils.save_pickle(pred_val_beam_best_caps, "../data/coco/extracted/pred_val_beam_best_caps_{}_RNN_{}.pickle".format(action, RNN_TYPE))
+# utils.save_pickle(pred_train_beam_caps, "../data/coco/extracted/pred_train_beam_caps_{}.pickle".format(action))
+# utils.save_pickle(pred_train_beam_best_caps, "../data/coco/extracted/pred_train_beam_best_caps_{}.pickle".format(action))
 
 # pred_val_beam_best_caps_tok = tokenize_beam_captions(pred_val_beam_best_caps)
 pred_val_beam_best_caps_tok = tokenize_beam_captions(pred_val_beam_best_caps)
 # pred_train_beam_best_caps_tok = tokenize_beam_captions(pred_train_beam_best_caps)
 
-# utils.save_pickle(pred_val_beam_caps, "../data/coco/extracted/pred_val_beam_caps_{}.pickle".format(action))
-# utils.save_pickle(pred_val_beam_best_caps, "../data/coco/extracted/pred_val_beam_best_caps_{}.pickle".format(action))
-# utils.save_pickle(pred_train_beam_caps, "../data/coco/extracted/pred_train_beam_caps_{}.pickle".format(action))
-# utils.save_pickle(pred_train_beam_best_caps, "../data/coco/extracted/pred_train_beam_best_caps_{}.pickle".format(action))
+
+# In[ ]:
 
 
-# In[238]:
-
-
-beam_val_blue_score_4 = corpus_bleu_score(ref_val_cap_token[:30], pred_val_beam_best_caps_tok)
-beam_val_blue_score_1 = corpus_bleu_score(ref_val_cap_token[:30], pred_val_beam_best_caps_tok, costume_weights=(1,0,0,0))
+beam_val_blue_score_4 = corpus_bleu_score(ref_val_cap_token[:100], pred_val_beam_best_caps_tok)
+beam_val_blue_score_1 = corpus_bleu_score(ref_val_cap_token[:100], pred_val_beam_best_caps_tok, costume_weights=(1,0,0,0))
 # beam_train_blue_score_4 = corpus_bleu_score(ref_train_cap_token[:100], pred_train_beam_best_caps_tok)
 # beam_train_blue_score_1 = corpus_bleu_score(ref_train_cap_token[:100], pred_train_beam_best_caps_tok, costume_weights=(1,0,0,0))
 print ('beam val blue score_4: {}'.format(beam_val_blue_score_4))
 print ('beam val blue score_1: {}'.format(beam_val_blue_score_1))
 # print ('beam train blue score_4: {}'.format(beam_train_blue_score_4))
 # print ('beam train blue score_1: {}'.format(beam_train_blue_score_1))
-
-
-# In[ ]:
-
-
-# def generate_beam_captions(model, image, beam_size):
-#     start = [vocab[START]]
-#     captions = [[start,0.0]]
-#     set_trace()
-#     while(len(captions[0][0]) < cg.max_cap_len):
-#         temp_captions = []
-#         for caption in captions:
-#             partial_caption = sequence.pad_sequences([caption[0]], maxlen=cg.max_cap_len, padding='post')
-#             next_words_pred = model.predict([np.asarray([image]), np.asarray(partial_caption)])[0]
-#             next_words = np.argsort(next_words_pred)[-beam_size:]
-#             for word in next_words:
-#                 new_partial_caption, new_partial_caption_prob = caption[0][:], caption[1]
-#                 new_partial_caption.append(word)
-#                 new_partial_caption_prob+=next_words_pred[word]
-#                 temp_captions.append([new_partial_caption,new_partial_caption_prob])
-#         captions = temp_captions
-#         captions.sort(key = lambda l:l[1])
-#         captions = captions[-beam_size:]
-
-#     return captions
 
