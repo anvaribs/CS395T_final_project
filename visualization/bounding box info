@@ -1,0 +1,140 @@
+bounding box info:
+
+(label, (left, top), (right, bottom))
+
+WITH DEFAULT PARAMETERS:
+
+Found 3 boxes for dog.jpg
+dog 0.78 (137, 214) (323, 540)
+truck 0.80 (462, 82) (694, 168)
+bicycle 0.84 (81, 112) (554, 469)
+Found 1 boxes for eagle.jpg
+bird 0.95 (128, 48) (643, 468)
+Found 4 boxes for horses.jpg
+horse 0.65 (0, 188) (169, 378)
+horse 0.75 (253, 196) (436, 371)
+horse 0.89 (435, 210) (603, 350)
+horse 0.89 (6, 193) (305, 411)
+Found 2 boxes for giraffe.jpg
+zebra 0.83 (241, 208) (422, 442)
+giraffe 0.89 (166, 0) (439, 448)
+Found 3 boxes for person.jpg
+dog 0.79 (70, 258) (209, 356)
+person 0.81 (190, 98) (271, 379)
+horse 0.89 (399, 128) (605, 352)
+
+
+
+PARAMETERS: -IOU=0.7
+
+Found 4 boxes for dog.jpg
+bicycle 0.36 (239, 144) (590, 436)
+dog 0.78 (137, 214) (323, 540)
+truck 0.80 (462, 82) (694, 168)
+bicycle 0.84 (81, 112) (554, 469)
+Found 1 boxes for eagle.jpg
+bird 0.95 (128, 48) (643, 468)
+Found 6 boxes for horses.jpg
+horse 0.32 (223, 209) (418, 360)
+horse 0.61 (1, 182) (154, 340)
+horse 0.65 (0, 188) (169, 378)
+horse 0.75 (253, 196) (436, 371)
+horse 0.89 (435, 210) (603, 350)
+horse 0.89 (6, 193) (305, 411)
+Found 2 boxes for giraffe.jpg
+zebra 0.83 (241, 208) (422, 442)
+giraffe 0.89 (166, 0) (439, 448)
+Found 3 boxes for person.jpg
+dog 0.79 (70, 258) (209, 356)
+person 0.81 (190, 98) (271, 379)
+horse 0.89 (399, 128) (605, 352)
+
+PARAMETERS: -IOU=0.1
+
+Found 0 boxes for scream.jpg
+Found 2 boxes for dog.jpg
+truck 0.80 (462, 82) (694, 168)
+bicycle 0.84 (81, 112) (554, 469)
+Found 1 boxes for eagle.jpg
+bird 0.95 (128, 48) (643, 468)
+Found 2 boxes for horses.jpg
+horse 0.89 (435, 210) (603, 350)
+horse 0.89 (6, 193) (305, 411)
+Found 1 boxes for giraffe.jpg
+giraffe 0.89 (166, 0) (439, 448)
+Found 3 boxes for person.jpg
+dog 0.79 (70, 258) (209, 356)
+person 0.81 (190, 98) (271, 379)
+horse 0.89 (399, 128) (605, 352)
+
+
+PARAMETERS: -s=0.7
+
+Found 3 boxes for dog.jpg
+dog 0.78 (137, 214) (323, 540)
+truck 0.80 (462, 82) (694, 168)
+bicycle 0.84 (81, 112) (554, 469)
+Found 1 boxes for eagle.jpg
+bird 0.95 (128, 48) (643, 468)
+Found 3 boxes for horses.jpg
+horse 0.75 (253, 196) (436, 371)
+horse 0.89 (435, 210) (603, 350)
+horse 0.89 (6, 193) (305, 411)
+Found 2 boxes for giraffe.jpg
+zebra 0.83 (241, 208) (422, 442)
+giraffe 0.89 (166, 0) (439, 448)
+Found 3 boxes for person.jpg
+dog 0.79 (70, 258) (209, 356)
+person 0.81 (190, 98) (271, 379)
+horse 0.89 (399, 128) (605, 352)
+
+
+PARAMETERS: -s=0.1
+
+Found 2 boxes for scream.jpg
+person 0.19 (101, 233) (251, 439)
+oven 0.26 (16, 51) (336, 439)
+Found 5 boxes for dog.jpg
+bicycle 0.23 (248, 170) (584, 454)
+motorbike 0.28 (60, 78) (114, 124)
+dog 0.78 (137, 214) (323, 540)
+truck 0.80 (462, 82) (694, 168)
+bicycle 0.84 (81, 112) (554, 469)
+Found 1 boxes for eagle.jpg
+bird 0.95 (128, 48) (643, 468)
+Found 7 boxes for horses.jpg
+horse 0.10 (342, 199) (430, 259)
+horse 0.12 (7, 183) (144, 283)
+horse 0.27 (318, 195) (452, 324)
+horse 0.65 (0, 188) (169, 378)
+horse 0.75 (253, 196) (436, 371)
+horse 0.89 (435, 210) (603, 350)
+horse 0.89 (6, 193) (305, 411)
+Found 2 boxes for giraffe.jpg
+zebra 0.83 (241, 208) (422, 442)
+giraffe 0.89 (166, 0) (439, 448)
+Found 3 boxes for person.jpg
+dog 0.79 (70, 258) (209, 356)
+person 0.81 (190, 98) (271, 379)
+horse 0.89 (399, 128) (605, 352)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
